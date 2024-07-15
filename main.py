@@ -25,11 +25,15 @@ def make_operation_file(path: str, method: str, method_spec: dict, spec: dict, o
         "",
         f"`{method.upper()} {path}`",
         "",
+        f'[{method_spec["externalDocs"]["description"]}]({method_spec["externalDocs"]["url"]})',
+        ""
+    ] + params_section(method_spec, spec) + [
+        "",
+        "## Operation Description",
+        "",
         f"{method_spec['description']}",
         "",
-        f'[{method_spec["externalDocs"]["description"]}]({method_spec["externalDocs"]["url"]})',
-        "",
-    ] + params_section(method_spec, spec)
+    ]
     
     method_file = Path(os.path.join(output_path, path[1:], f"{method}.md"))
     method_file.parent.mkdir(exist_ok=True, parents=True)
@@ -81,19 +85,6 @@ def params_section(method_spec: dict, spec: dict):
     return out
 
 
-def get_references(method_spec: dict, spec: dict):
-    refs = []
-
-    for key, value in traverse_json(method_spec):
-        if key == "$ref":
-            ref  = get_reference(value, spec)
-            refs.append((value, ref))
-
-            refs += get_references(value, spec)
-
-    return refs
-
-
 def get_reference(key: str, spec: dict):
     pieces = key.split("/")[1:]
     target = spec
@@ -101,19 +92,6 @@ def get_reference(key: str, spec: dict):
         target = target[piece]
 
     return target
-
-
-def traverse_json(obj):
-    if isinstance(obj, dict):
-        for k, v in obj.items():
-            yield k, v
-            for inner_k, inner_v in traverse_json(v):
-                yield inner_k, inner_v
-    elif isinstance(obj, list):
-        for i, v in enumerate(obj):
-            yield i, v
-            for inner_k, inner_v in traverse_json(v):
-                yield inner_k, inner_v
 
 
 if __name__ == "__main__":
